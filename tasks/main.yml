@@ -1,0 +1,38 @@
+---
+- name: Get current grafana-agent version
+  shell: "cat /etc/grafana/version || echo -n 0.0.0"
+  register: grafana_agent_current_version
+
+- name: "Download grafana-agent deb package"
+  get_url:
+    url: "https://github.com/grafana/agent/releases/download/v{{ grafana_agent_version }}/grafana-agent-{{ grafana_agent_version }}-1.amd64.deb"
+    dest: "/tmp/grafana-agent-{{ grafana_agent_version }}-1.amd64.deb"
+  when: grafana_agent_current_version.stdout != grafana_agent_version
+
+- name: "Install grafana-agent deb package"
+  apt:
+    deb: "/tmp/grafana-agent-{{ grafana_agent_version }}-1.amd64.deb"
+  when: grafana_agent_current_version.stdout != grafana_agent_version
+
+- name: "Create grafana-agent.yml"
+  template:
+    src: "{{ grafana_agent_template }}"
+    dest: /etc/grafana-agent.yaml
+  notify:
+    - restart grafana-agent
+
+- name: Create grafana_agent directory
+  file:
+    name: /etc/grafana/
+    state: directory
+
+- name: Enable grafana-agent
+  service:
+    name: grafana-agent
+    enabled: yes
+
+- name: Set current grafana_agent version
+  template:
+    src: version.j2
+    dest: "/etc/grafana/version"
+    mode: "0644"

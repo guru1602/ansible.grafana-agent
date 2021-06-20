@@ -1,0 +1,6 @@
+---
+- name: restart grafana-agent
+  service:
+    name: grafana-agent
+    daemon_reload: yes
+    state: restarted    
