@@ -1,2 +1,3 @@
 ---
 grafana_agent_version: 0.15.0
+grafana_agent_template: grafana-default-agent.yaml

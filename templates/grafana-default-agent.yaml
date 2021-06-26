@@ -1,0 +1,30 @@
+integrations:
+  node_exporter:
+    enabled: true
+  prometheus_remote_write:
+  - basic_auth:
+      password: {{ grafana_cloud_password }}
+      username: {{ grafana_cloud_username }}
+    url: {{ grafana_cloud_url }}
+prometheus:
+  configs:
+  - name: integrations
+    remote_write:
+    - basic_auth:
+        password: {{ grafana_cloud_password }}
+        username: {{ grafana_cloud_username }}
+      url: {{ grafana_cloud_url }}
+    scrape_configs: {% if grafana_scrapes is not defined %}[]
+{% else %}
+{% for scrape in grafana_scrapes %}
+    - job_name: {{ scrape.job_name }}
+      static_configs:
+      - targets:
+        - {{ scrape.target }}
+{% endfor %}
+{% endif %}
+  global:
+    scrape_interval: 15s
+  wal_directory: /tmp/grafana-agent-wal
+server:
+  http_listen_port: 12345
