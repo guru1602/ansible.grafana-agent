@@ -1,6 +1,8 @@
 ---
 ignore: |
   templates
+  /templates
+  templates/
 rules:
   braces: enable
   brackets: enable
