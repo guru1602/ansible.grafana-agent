@@ -2,17 +2,60 @@
 - name: Get current grafana-agent version
   shell: "cat /etc/grafana/version || echo -n 0.0.0"
   register: grafana_agent_current_version
+  check_mode: no
 
-- name: "Download grafana-agent deb package"
+# - set_fact:
+#     grafana_agent_current_version:
+#       stdout: 0.0.0
+#   when: check_mode
+
+- debug:
+    var: grafana_agent_current_version
+
+- set_fact:
+    package_format: deb
+  when: ansible_os_family == "Debian"
+
+- set_fact:
+    package_format: rpm
+  when: ansible_os_family == "RedHat"
+
+- name: "Download grafana-agent package"
   get_url:
-    url: "https://github.com/grafana/agent/releases/download/v{{ grafana_agent_version }}/grafana-agent-{{ grafana_agent_version }}-1.amd64.deb"
-    dest: "/tmp/grafana-agent-{{ grafana_agent_version }}-1.amd64.deb"
-  when: grafana_agent_current_version.stdout != grafana_agent_version
+    url: "https://github.com/grafana/agent/releases/download/v{{ grafana_agent_version }}/grafana-agent-{{ grafana_agent_version }}-1.amd64.{{ package_format }}"
+    dest: "/tmp/grafana-agent-{{ grafana_agent_version }}-1.amd64.{{ package_format }}"
+  when:
+    - grafana_agent_current_version.stdout != grafana_agent_version
+  check_mode: no
+
+- name: Import grafana's gpg key for deb
+  apt_key:
+    state: present
+    url: https://packages.grafana.com/gpg.key
+  when:
+    - ansible_os_family == "Debian"
 
 - name: "Install grafana-agent deb package"
   apt:
     deb: "/tmp/grafana-agent-{{ grafana_agent_version }}-1.amd64.deb"
-  when: grafana_agent_current_version.stdout != grafana_agent_version
+  when:
+    - grafana_agent_current_version.stdout != grafana_agent_version
+    - ansible_os_family == "Debian"
+
+- name: Import grafana's gpg key for rpm
+  rpm_key:
+    state: present
+    key: https://packages.grafana.com/gpg.key
+  when:
+    - ansible_os_family == "RedHat"
+
+- name: "Install grafana-agent rpm package"
+  dnf:
+    name: "/tmp/grafana-agent-{{ grafana_agent_version }}-1.amd64.rpm"
+    state: installed
+  when:
+    - grafana_agent_current_version.stdout != grafana_agent_version
+    - ansible_os_family == "RedHat"
 
 - name: "Create grafana-agent.yml"
   template:
