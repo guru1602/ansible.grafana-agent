@@ -6,8 +6,18 @@ integrations:
     enabled: true
 
 metrics:
+  wal_directory: /tmp/grafana-agent-wal
+  global:
+    scrape_interval: 1m
+    external_labels:
+        cluster: {{ nginx_env }}
   configs:
-  - name: default
+  - name: integrations
+    remote_write: 
+      - url: {{ grafana_cloud_prom_url }}
+        basic_auth: 
+         username: {{ grafana_cloud_prom_username }}
+         password: {{ grafana_cloud_prom_password }}    
     scrape_configs: {% if grafana_scrapes is not defined %}[]
 {% else %}
 {% for scrape in grafana_scrapes %}
@@ -18,11 +28,19 @@ metrics:
         - {{ scrape.target }}
 {% endfor %}
 {% endif %}
-  global:
-    scrape_interval: 1m
-    remote_write:
-    - basic_auth:
-        password: {{ grafana_cloud_password }}
-        username: {{ grafana_cloud_username }}
-      url: {{ grafana_cloud_url }}
-  wal_directory: /tmp/grafana-agent-wal
+
+logs:
+  configs:
+  - name: integrations
+    clients:
+    - url: {{ grafana_cloud_loki_url }}
+      basic_auth:
+        username: {{ grafana_cloud_loki_username }}
+        password: {{ grafana_cloud_loki_password }}
+      external_labels:
+        cluster: {{ nginx_env }}
+        job: integrations/node_exporter
+    positions:
+      filename: /tmp/positions.yaml
+    target_config:
+      sync_period: 10s
