@@ -1,5 +1,5 @@
 server:
-  log_level: info
+  log_level: debug
 
 integrations:
   node_exporter:
@@ -23,6 +23,7 @@ metrics:
 {% for scrape in grafana_scrapes %}
 
     - job_name: {{ scrape.job_name }}
+      metrics_path: {{ scrape.path }}
       static_configs:
       - targets:
         - {{ scrape.target }}
@@ -42,5 +43,14 @@ logs:
         job: integrations/node_exporter
     positions:
       filename: /tmp/positions.yaml
+    scrape_configs:
+     - job_name: integrations/node_exporter_direct_scrape
+       static_configs:
+        - targets:
+          - localhost
+          labels:
+            instance: hostname
+            __path__: /var/log/*.log
+            job: integrations/node_exporter      
     target_config:
       sync_period: 10s
