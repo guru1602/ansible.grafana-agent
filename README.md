@@ -34,8 +34,8 @@ Example Playbook
         grafana_agent_template: grafana/grafana-agent.yaml
         # additional scrapes, default interval is 15s
         grafana_scrapes:
-          - job_name: openvpn-users
-            target: localhost:9176
+          - job_name: nginx_dev
+            target: localhost:80
 ```
 
 Example Template
